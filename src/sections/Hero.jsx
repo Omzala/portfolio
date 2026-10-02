@@ -10,7 +10,8 @@ const NAME = 'OM ZALA'.split('');
 
 export function CountUp({ to, suffix = '', className = '' }) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: '-10% 0px' });
+  // A shallow bottom margin, so stats tucked under the fold line of a phone's first screen still count up.
+  const inView = useInView(ref, { once: true, margin: '-10% 0px -2% 0px' });
   const [value, setValue] = useState(0);
   const reduce = useReducedMotion();
   useEffect(() => {

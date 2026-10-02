@@ -6,6 +6,7 @@ import Header from './components/Header.jsx';
 import Marquee from './components/Marquee.jsx';
 import Preloader from './components/Preloader.jsx';
 import ScrollTop from './components/ScrollTop.jsx';
+import TouchLight from './components/TouchLight.jsx';
 import { Safe3D } from './components/ui.jsx';
 import Hero from './sections/Hero.jsx';
 import About from './sections/About.jsx';
@@ -44,6 +45,7 @@ function App() {
     <Safe3D><Starfield /></Safe3D>
     <div className="grain" aria-hidden="true" />
     <Cursor />
+    <TouchLight />
     <Header ready={!loading} />
     <main id="main">
       <Hero ready={!loading} />

@@ -586,85 +586,289 @@ html { scrollbar-width: thin; scrollbar-color: rgba(255, 106, 43, 0.55) var(--bg
   .chip-a, .chip-d { display: none; }
 }
 
-@media (max-width: 899px) {
-  .work { padding-bottom: 40px; }
-  .work-sticky { position: static; height: auto; overflow: visible; }
-  .work-track { width: auto; flex-direction: column; padding: 0 var(--gutter); gap: 16px; }
-  .work-intro { width: auto; flex-direction: row; align-items: flex-end; gap: 16px; }
-  .work-intro strong { font-size: 110px; }
-  .pcard { width: 100%; height: auto; min-height: 0; }
-  .pcard-mock { height: 240px; flex: none; }
-  .work-outro { width: auto; min-height: 180px; }
+/* Also phones turned sideways: too short for the pinned track, so they get the carousel too (see Work.jsx). */
+@media (max-width: 899px), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .scroll-cue { display: none; }
+  .hero-stats { gap: 28px; }
+  .hero-stats strong { font-size: 36px; }
+  /* The pinned horizontal track becomes a swipeable carousel: cards snap to the centre, the next one peeks in. */
+  .work { padding-bottom: 24px; }
+  .work-sticky { position: static; height: auto; overflow: visible; gap: 14px; }
+  .work-track { width: auto; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter); scrollbar-width: none; padding: 6px var(--gutter) 18px; gap: 14px; }
+  .work-track::-webkit-scrollbar { display: none; }
+  .work-intro { width: 156px; justify-content: flex-end; gap: 12px; padding-bottom: 6px; scroll-snap-align: start; }
+  .work-intro strong { font-size: 104px; }
+  .work-intro p { font-size: 15px; line-height: 1.45; }
+  .work-arrow { width: 44px; height: 44px; }
+  .pcard { width: min(78vw, 400px); height: auto; min-height: 0; scroll-snap-align: center; }
+  .pcard-mock { flex: 1 0 auto; height: auto; min-height: 220px; }
+  .work-outro { width: min(64vw, 300px); min-height: 0; padding: 24px; scroll-snap-align: end; }
+  .work-outro strong { font-size: 24px; }
+  .work-swipe { margin-inline: var(--gutter); height: 3px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .work-swipe i { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--cyan)); transform-origin: left; }
   .modal-grid { grid-template-columns: minmax(0, 1fr); }
   .modal-visual { order: -1; max-width: 460px; }
   .modal-num { display: none; }
 }
 
 @media (max-width: 760px) {
-  :root { --radius: 24px; }
+  :root { --radius: 22px; }
   .site-header { top: 10px; height: 60px; }
   .header-time { display: none; }
   .nav-cta { display: none; }
   .logo-text { display: none; }
-  .hero { height: auto; min-height: max(100svh, 900px); }
-  .hero-meta { top: 88px; font-size: 11px; }
+  .mobile-menu { padding-top: 96px; }
+  .preloader-inner { flex-direction: column-reverse; align-items: flex-start; gap: 4px; }
+  .preloader-line { padding-bottom: 0; font-size: 12px; }
+
+  /* Shared type and controls, scaled for a phone held at arm's length. */
+  .reveal-text, .contact-title { font-size: clamp(32px, 9.6vw, 44px); }
+  .kicker { margin-bottom: 12px; font-size: 11px; }
+  .section-head { gap: 14px; margin-bottom: 28px; }
+  .section-lede { font-size: 15px; }
+  .btn { min-height: 48px; padding: 0 20px; font-size: 14.5px; }
+  .btn-small { min-height: 42px; padding: 0 16px; font-size: 13.5px; }
+  .card-label { font-size: 11px; }
+
+  /* Hero: sized from the screen height so the name, Bandit, the intro and the stats all fit in the first view.
+     --stage is the height Bandit's stage gets once the name above and the copy below are accounted for. */
+  .hero { --stage: clamp(230px, calc(100svh - 390px), 440px); height: 100svh; min-height: 620px; }
+  .hero-meta { top: 82px; font-size: 10.5px; }
   .hero-meta > span:first-child, .hero-meta .coords { display: none; }
-  .hero-name { top: 112px; font-size: clamp(52px, 16.5vw, 120px); }
-  .planet-wrap { top: 200px; width: min(72vw, 320px); }
-  .raccoon-stage { top: 150px; width: 100vw; height: 400px; }
-  .bubble { right: 3%; top: 40%; max-width: 132px; padding: 10px 12px; font-size: 13px; border-radius: 14px 14px 14px 4px; }
-  .float-chip { display: none; }
-  .hero-bottom { bottom: 24px; flex-direction: column; align-items: stretch; gap: 20px; }
-  .hero-intro { max-width: none; }
-  .hero-intro p { font-size: 16px; }
-  .hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-name { top: 100px; font-size: clamp(48px, 16vw, 120px); }
+  .planet-wrap { top: calc(150px + var(--stage) * 0.16); width: min(74vw, 330px, calc(var(--stage) * 0.74)); }
+  .raccoon-stage { top: 150px; width: 100vw; height: var(--stage); }
+  .bubble { left: 4%; right: auto; top: 5%; max-width: 136px; padding: 9px 12px; font-size: 12.5px; border-radius: 14px 14px 4px 14px; }
+  .float-chip { padding: 6px 11px; gap: 6px; font-size: 11px; }
+  .chip-b { right: 3%; top: 62%; }
+  .chip-c { left: 3%; top: 74%; }
+  .hero-bottom { bottom: 18px; flex-direction: column; align-items: stretch; gap: 14px; }
+  .hero-intro { position: relative; max-width: none; gap: 14px; }
+  .hero-intro p { font-size: 15px; line-height: 1.5; }
+  .hero-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .hero-actions .magnetic, .hero-actions .btn { width: 100%; }
-  .hero-actions .btn { padding: 0 14px; }
-  .poke-btn { display: inline-flex; grid-column: 1 / -1; min-height: 44px; }
-  .hero-stats { gap: 0; justify-content: space-between; padding-top: 16px; border-top: 1px solid var(--line); }
-  .hero-stats strong { font-size: 30px; }
-  .scroll-cue { display: none; }
-  .marquee { padding: 40px 0 60px; }
-  .about { padding-block: 80px 100px; }
-  .section-head { margin-bottom: 32px; }
-  .bento { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .hero-actions .btn { min-height: 46px; padding: 0 12px; font-size: 14px; }
+  /* Poke Bandit floats just under him as a small pill rather than taking a full row. */
+  .hero-actions .poke-btn { position: absolute; left: 50%; top: -52px; translate: -50% 0; display: inline-flex; width: auto; min-height: 36px; padding: 0 14px; gap: 7px; font-size: 12.5px; background: rgba(10, 10, 16, 0.6); animation: poke-pulse 2.6s ease-out infinite; }
+  .hero-stats { gap: 0; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--line); }
+  .hero-stats strong { font-size: 24px; }
+  .hero-stats span { font-size: 11.5px; }
+
+  .marquee { padding: 28px 0 44px; }
+  .marquee-accent { padding: 12px 0; font-size: 20px; }
+  .marquee-dark { margin-top: -26px; padding: 34px 0 11px; font-size: 12px; }
+
+  .about { padding-block: 64px 80px; }
+  .bento { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; gap: 12px; }
   .bento > * { grid-column: auto !important; grid-row: auto !important; }
-  .terminal { height: 440px; }
-  .clock, .status-card { min-height: 230px; }
-  .bento-tools { height: 400px; }
-  .work { padding-top: 60px; }
+  .terminal { height: 390px; }
+  .terminal-bar { height: 44px; padding: 0 16px; }
+  .terminal-screen { padding: 16px 18px 6px; font-size: 13.5px; }
+  .terminal-input { margin: 0 12px 10px; min-height: 50px; padding-left: 14px; }
+  .terminal-input input { min-height: 46px; }
+  .chat-suggestions { padding: 0 14px 12px; }
+  .chat-foot { padding: 0 16px 12px; }
+  .clock, .status-card { padding: 22px; }
+  .clock { min-height: 170px; }
+  .clock-time { font-size: 50px; }
+  .clock p { font-size: 13px; }
+  .orbit { right: -60px; top: -60px; width: 200px; height: 200px; }
+  .orbit-b { inset: 20px; }
+  .orbit-moon { width: 24px; height: 24px; margin: -12px; }
+  .status-card { gap: 26px; }
+  .status-card strong { margin-bottom: 14px; }
+  .bento-tools { height: 340px; }
+  .card-head { padding: 18px 18px 0; gap: 10px; }
+  .switch { gap: 8px; padding-left: 12px; font-size: 12.5px; white-space: nowrap; }
+  .pill-box { gap: 8px; padding: 16px 18px 18px; }
+  .pill { padding: 10px 16px; font-size: 14px; }
+
+  .work { padding-top: 56px; }
   .filters { max-width: 100%; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .filters::-webkit-scrollbar { display: none; }
-  .filter { flex-shrink: 0; }
-  .pcard { padding: 20px; border-radius: 26px; }
-  .pcard-num { font-size: 56px; }
-  .pcard-mock { height: 200px; }
+  .filter { flex-shrink: 0; min-height: 38px; padding: 0 14px; font-size: 13.5px; }
+  .work-intro { width: 132px; }
+  .work-intro strong { font-size: 88px; }
+  .work-intro p { font-size: 14px; }
+  .pcard { padding: 18px; gap: 14px; border-radius: 24px; }
+  .pcard-top .chips { justify-content: flex-start; }
+  .pcard .chip { padding: 4px 9px; font-size: 10px; }
+  .pcard-num { font-size: 44px; }
+  .pcard-mock { min-height: 180px; }
+  .pcard h3 { font-size: 24px; }
+  .pcard-type { font-size: 17px; }
+  .pcard-foot { margin-top: 4px; }
   .pcard-foot .tags { display: none; }
+  .work-outro { padding: 20px; }
+  .work-outro strong { font-size: 21px; }
   .modal-backdrop { padding: 0; align-items: end; }
-  .modal { max-height: 92dvh; border-radius: 28px 28px 0 0; }
-  .modal-badge { width: 64px; height: 64px; left: auto; right: 10px; }
+  .modal { max-height: 92dvh; padding: 20px 18px 24px; border-radius: 26px 26px 0 0; }
+  .modal-grid { gap: 18px; margin-top: 14px; }
+  .modal-copy { gap: 12px; }
+  .modal h3 { font-size: 30px; }
+  .modal .pcard-type { font-size: 20px; }
+  .modal-desc { font-size: 14.5px; line-height: 1.65; }
+  .feature-list { gap: 8px; font-size: 14px; }
+  .modal-visual { max-width: 330px; }
+  .modal-badge { width: 56px; height: 56px; left: auto; right: 10px; bottom: -14px; }
+  .modal-badge svg { width: 26px; height: 26px; }
+  .modal-nav { justify-content: flex-end; margin-top: 22px; padding-top: 16px; }
   .modal-nav > span:first-child { display: none; }
-  .modal-nav { justify-content: flex-end; }
-  .arcade { padding-block: 100px 80px; }
-  .game-stage { height: min(78svh, 600px); }
-  .hud { font-size: 11px; gap: 8px; flex-wrap: nowrap; }
+
+  .arcade { padding-block: 72px 64px; }
+  .game-stage { height: clamp(440px, 70svh, 580px); }
+  .hud { left: 16px; right: 16px; top: 14px; font-size: 11px; gap: 8px; flex-wrap: nowrap; }
   .hud small { display: none; }
-  .hud-score strong { margin-left: 0; }
-  .hud-score strong { font-size: 18px; }
-  .board-col { display: flex; }
-  .legend { grid-template-columns: minmax(0, 1fr); }
-  .contact { padding-block: 90px 100px; }
-  .socials { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .social { height: 124px; }
-  .email-pill { gap: 10px; padding-left: 16px; }
-  .footer-row { justify-content: center; text-align: center; }
+  .hud-score strong { margin-left: 0; font-size: 18px; }
+  .game-panel { gap: 12px; padding: 22px 20px; border-radius: 22px; }
+  .panel-title { font-size: 24px; }
+  .panel-score { font-size: 48px; }
+  .panel-sub { font-size: 14px; }
+  .stage-foot { left: 16px; right: 16px; bottom: 12px; font-size: 10.5px; }
+  .board-col { display: flex; gap: 12px; }
+  .board { padding: 18px; }
+  .board-head { margin-bottom: 14px; }
+  .board-head strong { font-size: 19px; }
+  .board-tabs { margin-bottom: 12px; }
+  .board-tabs button { min-height: 34px; font-size: 12.5px; }
+  .board-list { gap: 5px; }
+  .board-list li { gap: 12px; min-height: 42px; padding: 0 12px; border-radius: 12px; font-size: 14.5px; }
+  .board-list .rank { width: 34px; }
+  .legend-card { padding: 18px; }
+  .legend { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+  .legend div { grid-template-columns: 28px 1fr; column-gap: 10px; }
+  .legend svg { width: 28px; height: 28px; }
+  .legend strong { font-size: 13px; }
+  .legend span { font-size: 11.5px; }
+
+  .contact { padding-block: 72px 80px; }
+  .contact-title { margin-bottom: 26px; }
+  .email-pill { gap: 10px; min-height: 56px; padding-left: 16px; }
+  .email-pill a { font-size: 15px; }
+  .email-pill .icon-btn { width: 42px; height: 42px; }
+  .contact-meta { align-items: flex-start; font-size: 13px; }
+  .contact-meta svg { flex-shrink: 0; margin-top: 3px; }
+  .socials { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 26px; }
+  .social { height: 108px; padding: 15px; border-radius: 18px; }
+  .social-text strong { font-size: 14px; }
+  .social-arrow { right: 13px; top: 13px; }
+  .contact-form { gap: 14px; padding: 20px; margin-top: 32px; }
+  .field { font-size: 13.5px; }
+  .field input, .field textarea, .field-input { min-height: 50px; border-radius: 12px; }
+  .footer-row { justify-content: center; gap: 12px; text-align: center; font-size: 13px; }
 }
 
 @media (max-width: 380px) {
-  .hero-actions { grid-template-columns: minmax(0, 1fr); }
-  .hero-stats span { font-size: 12px; }
+  .hero-actions .btn { padding: 0 10px; font-size: 13px; gap: 7px; }
+  .hero-stats span { font-size: 11px; }
+  .bubble { max-width: 120px; font-size: 12px; }
   .board-list .tier { display: none; }
   .board-list li { gap: 10px; }
+  .socials { gap: 8px; }
+  .social { height: 100px; padding: 13px; }
+}
+
+@media (max-width: 340px) {
+  .float-chip { display: none; }
+}
+
+/* Phones turned sideways: a short, wide screen. Bandit moves to the right of the name and intro so the hero
+   still fits in one view, and the menu and arcade are never taller than the screen. */
+@media (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .site-header { top: 8px; height: 54px; }
+  .logo-mark { width: 36px; height: 36px; }
+  .mobile-menu { padding-block: 76px 20px; overflow-y: auto; }
+  .mobile-menu nav a { font-size: min(12vw, 11vh); }
+  .hero { height: 100svh; min-height: 360px; }
+  .hero-meta { top: 70px; font-size: 10.5px; }
+  .hero-meta > span:first-child, .hero-meta .coords { display: none; }
+  .hero-name { top: 88px; justify-content: flex-start; padding-inline: var(--gutter); font-size: min(10vw, 19vh); }
+  .planet-wrap { left: auto; right: calc(25vw - min(26vh, 16vw)); top: calc(28px + 50svh - min(26vh, 16vw)); margin: 0; width: min(52vh, 32vw); }
+  .raccoon-stage { left: auto; right: 2vw; top: 64px; margin: 0; width: 46vw; height: calc(100svh - 72px); }
+  .bubble { left: auto; right: 4%; top: 2%; max-width: 170px; padding: 9px 12px; font-size: 12.5px; border-radius: 14px 14px 14px 4px; }
+  .float-chip { display: none; }
+  .hero-actions .poke-btn { display: none; }
+  .hero-bottom { right: auto; bottom: 14px; width: 54%; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .hero-intro { gap: 12px; }
+  .hero-intro p { font-size: 14px; line-height: 1.5; }
+  .hero-actions { gap: 8px; }
+  .hero-actions .btn { min-height: 42px; padding: 0 16px; font-size: 13.5px; }
+  .hero-stats { gap: 28px; }
+  .hero-stats strong { font-size: 24px; }
+  .hero-stats span { font-size: 11.5px; }
+  .pcard { width: min(46vw, 380px); }
+  .pcard-mock { min-height: 140px; }
+  .modal-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); align-items: start; }
+  .modal-visual { order: 0; }
+  .modal h3 { font-size: 30px; }
+  .game-stage { height: calc(100svh - 80px); min-height: 300px; }
+}
+
+@keyframes poke-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(255, 106, 43, 0.5); }
+  70%, 100% { box-shadow: 0 0 0 12px rgba(255, 106, 43, 0); }
+}
+
+/* ───────────────────────── Touch screens ───────────────────────── */
+/* The exact complement of the cursor's (hover: hover) and (pointer: fine), so mouse-driven laptops never see these. */
+@media not all and (hover: hover) and (pointer: fine) {
+  /* Cards catch the light under your finger instead of the cursor (TouchLight.jsx sets --mx/--my and .lit). */
+  .card::before, .card::after, .pcard::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.7s var(--ease); }
+  .card::before { background: radial-gradient(280px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.08), transparent 55%); }
+  .card::after, .pcard::after { z-index: 4; padding: 1px; background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 150, 90, 0.9), transparent 65%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .pcard::after { background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--tone) 90%, white), transparent 65%); }
+  .lit::before, .lit::after, .tilt.social.lit::before { opacity: 1; transition-duration: 0.15s; }
+
+  /* A press, not a sticky hover: buttons fill while your finger is down and let go cleanly. */
+  .btn:hover::after { transform: translateY(101%); }
+  .btn-light:hover { color: var(--bg); }
+  .btn-ghost:hover, .btn-dark:hover { color: var(--text); }
+  .btn-accent:hover { color: var(--orange-ink); }
+  .btn:active::after { transform: translateY(0); transition-duration: 0.25s; }
+  .btn:active { color: var(--orange-ink); }
+  .icon-btn:hover { background: rgba(255, 255, 255, 0.03); color: var(--text); border-color: var(--line-2); }
+  .icon-btn.solid:hover { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .icon-btn:active { background: var(--text); color: var(--bg); border-color: var(--text); transform: scale(0.92); }
+  .icon-btn.solid:active { background: var(--orange); color: var(--orange-ink); border-color: var(--orange); }
+
+  /* Cards give a little under your thumb. */
+  .tilt { transition: transform 0.4s var(--ease), border-color 0.3s, background 0.3s, scale 0.35s var(--ease); }
+  .social:active { scale: 0.96; }
+  .pcard:active .pcard-mock { scale: 0.96; }
+  .work-outro:active { background: rgba(255, 106, 43, 0.06); border-color: var(--orange); }
+
+  /* Without a mouse to chase, the hero's tech chips drift on their own. */
+  .float-chip { animation: chip-drift 5s ease-in-out infinite; }
+  .chip-c, .chip-d { animation-delay: -2.5s; }
+}
+@keyframes chip-drift { 50% { translate: 0 -9px; } }
+
+/* Swiping the mission files: the centred card grows to full size, its glow blooms and its browser swings flat,
+   while the neighbours peeking in on either side sit back, dimmed and turned towards the middle. */
+@supports (animation-timeline: view()) {
+  @media (max-width: 899px) and (prefers-reduced-motion: no-preference), (orientation: landscape) and (max-height: 520px) and (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+    .pcard { view-timeline: --pcard inline; animation: pcard-focus 1ms linear both; animation-timeline: --pcard; }
+    .pcard::before { animation: pcard-glow 1ms linear both; animation-timeline: --pcard; }
+    .pcard-mock .mock { animation: pcard-swing 1ms linear both; animation-timeline: --pcard; }
+  }
+}
+@keyframes pcard-focus {
+  0%, 100% { scale: 0.9; opacity: 0.45; }
+  38%, 62% { scale: 1; opacity: 1; }
+}
+@keyframes pcard-glow {
+  0%, 100% { transform: scale(0.75); opacity: 0.35; }
+  50% { transform: scale(1.25) translate(-6%, 6%); opacity: 1; }
+}
+@keyframes pcard-swing {
+  0% { transform: rotateX(8deg) rotateY(-30deg) rotateZ(1deg); }
+  50% { transform: rotateX(3deg) rotateY(-5deg) scale(1.03); }
+  100% { transform: rotateX(8deg) rotateY(20deg) rotateZ(-1deg); }
+}
+
+/* Touch keyboards zoom the page in on any field under 16px, so the chat input stays at 16px on touch screens. */
+@media (pointer: coarse) {
+  .terminal-input input { font-size: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

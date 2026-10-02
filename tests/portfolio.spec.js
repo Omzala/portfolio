@@ -161,6 +161,28 @@ test('mobile navigation works and nothing overflows sideways', async ({ page }) 
   await page.screenshot({ path: 'test-results/mobile-hero.png' });
 });
 
+test.describe('on a touch phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test('the hero fits the first screen and the mission files swipe as a carousel', async ({ page }) => {
+    await page.goto(HOME);
+    await expect(page.locator('.hero-stats')).toBeInViewport({ ratio: 1 });
+    await expect(page.getByRole('button', { name: 'Poke Bandit' })).toBeInViewport();
+    await toSection(page, 'work');
+    const track = page.locator('.work-track');
+    expect(await track.evaluate(element => getComputedStyle(element).scrollSnapType)).toContain('x');
+    expect(await track.evaluate(element => element.scrollWidth - element.clientWidth)).toBeGreaterThan(0);
+    await expect(page.locator('.work-swipe')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Open Junohub' }).click();
+    await expect(page.getByRole('dialog').getByRole('heading', { level: 3 })).toHaveText('Junohub');
+    await page.keyboard.press('Escape');
+    // Turned sideways, a large phone is wider than 900px but still gets the carousel, not the pinned track.
+    await page.setViewportSize({ width: 932, height: 430 });
+    await expect(page.locator('.work-swipe')).toHaveCount(1);
+    await expect(page.locator('.work-progress')).toHaveCount(0);
+  });
+});
+
 test('reduced motion skips the intro and smooth scrolling and keeps content visible', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');

@@ -120,7 +120,9 @@ function ProjectModal({ project, list, onClose, onStep }) {
 export default function Work() {
   const [filter, setFilter] = useState('All');
   const [open, setOpen] = useState(null);
-  const wide = useMedia('(min-width: 900px)');
+  // Phones turned sideways are wide enough for the pinned track but too short for it, so they get the carousel.
+  const sideways = useMedia('(orientation: landscape) and (max-height: 520px) and (pointer: coarse)');
+  const wide = useMedia('(min-width: 900px)') && !sideways;
   const wrap = useRef(null);
   const track = useRef(null);
   const [distance, setDistance] = useState(0);
@@ -140,6 +142,14 @@ export default function Work() {
   const smooth = useSpring(scrollYProgress, { stiffness: 160, damping: 32, mass: 0.35 });
   const x = useTransform(smooth, value => -value * distance);
   const bar = useTransform(smooth, [0, 1], [0, 1]);
+  // On narrow screens the track is a swipeable carousel; this follows how far along it you are.
+  const { scrollXProgress } = useScroll({ container: track, axis: 'x' });
+  const swipe = useSpring(scrollXProgress, { stiffness: 220, damping: 34, mass: 0.3 });
+
+  // A new filter starts the carousel back at the first file.
+  useEffect(() => {
+    if (!wide) track.current?.scrollTo({ left: 0, behavior: 'smooth' });
+  }, [filter, wide]);
 
   // Keyboard focus on an off-screen card scrolls the page until the track brings it into view.
   // Pointer presses also focus the card, but must not move the page between mouse-down and click.
@@ -181,8 +191,8 @@ export default function Work() {
           <motion.div className="work-track" ref={track} style={wide ? { x } : undefined}>
             <div className="work-intro" aria-hidden={!wide}>
               <strong>{list.length}</strong>
-              <p>{list.length === 1 ? 'mission' : 'missions'} on file.<br />{wide ? 'Keep scrolling to fly through them.' : 'Tap any file to open it.'}</p>
-              {wide && <span className="work-arrow"><ArrowRight size={22} /></span>}
+              <p>{list.length === 1 ? 'mission' : 'missions'} on file.<br />{wide ? 'Keep scrolling to fly through them.' : 'Swipe through, tap one to open it.'}</p>
+              <span className="work-arrow"><ArrowRight size={wide ? 22 : 18} /></span>
             </div>
             <AnimatePresence mode="popLayout">
               {list.map(project => <ProjectCard key={project.id} project={project} onOpen={setOpen} onFocus={focusCard} />)}
@@ -193,7 +203,9 @@ export default function Work() {
               <span>More experiments on GitHub <ArrowUpRight size={16} /></span>
             </a>
           </motion.div>
-          {wide && <div className="work-progress" aria-hidden="true"><motion.i style={{ scaleX: bar }} /></div>}
+          {wide
+            ? <div className="work-progress" aria-hidden="true"><motion.i style={{ scaleX: bar }} /></div>
+            : <div className="work-swipe" aria-hidden="true"><motion.i style={{ scaleX: swipe }} /></div>}
         </div>
       </div>
       <AnimatePresence>
