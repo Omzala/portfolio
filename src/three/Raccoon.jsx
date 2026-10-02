@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { createStage, glowTexture, prefersReducedMotion, runWhileVisible } from './stage.js';
+import { compileScene, createStage, glowTexture, prefersReducedMotion, runWhileVisible } from './stage.js';
 import RaccoonArt from '../components/RaccoonArt.jsx';
+import { introDone } from '../lib/intro.js';
 
 const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0, ...extra });
 const glow = color => new THREE.MeshBasicMaterial({ color, toneMapped: false });
@@ -164,7 +165,7 @@ export default function Raccoon({ pokes = 0, onPoke }) {
   useEffect(() => {
     const element = host.current;
     const stage = createStage(element, { maxPixelRatio: 1.75, reflections: true });
-    if (!stage) { setFailed(true); return; }
+    if (!stage) { setFailed(true); introDone('raccoon'); return; }
     const { renderer, scene, dispose } = stage;
     const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 60);
     camera.position.set(0, 0.1, 13);
@@ -248,17 +249,24 @@ export default function Raccoon({ pokes = 0, onPoke }) {
       renderer.render(scene, camera);
     };
 
-    let stop;
-    if (prefersReducedMotion()) {
+    // Shaders compile in parallel first, so the first frame (and the intro over it) never stalls.
+    let stop = () => {};
+    let disposed = false;
+    compileScene(renderer, scene, camera).then(() => {
+      if (disposed) return;
       frame(0, 0);
-      const redraw = () => { resize(); frame(0, 0); };
-      const reducedObserver = new ResizeObserver(redraw);
-      reducedObserver.observe(element);
-      stop = () => reducedObserver.disconnect();
-    } else {
-      stop = runWhileVisible(element, frame);
-    }
+      introDone('raccoon');
+      if (prefersReducedMotion()) {
+        const redraw = () => { resize(); frame(0, 0); };
+        const reducedObserver = new ResizeObserver(redraw);
+        reducedObserver.observe(element);
+        stop = () => reducedObserver.disconnect();
+      } else {
+        stop = runWhileVisible(element, frame);
+      }
+    });
     return () => {
+      disposed = true;
       stop();
       observer.disconnect();
       window.removeEventListener('pointermove', onPointer);

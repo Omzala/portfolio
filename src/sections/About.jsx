@@ -27,7 +27,7 @@ export default function About() {
         <Kicker index="01">Mission control</Kicker>
         <RevealText>Meet the <em>pilot</em></RevealText>
       </div>
-      <FadeUp as="p" className="section-lede">Every panel here does something. Type into the terminal, flip gravity off, fling the tool pills around.</FadeUp>
+      <FadeUp as="p" className="section-lede">Get to know me. Ask my AI avatar about my work, flip gravity off, fling the tool pills around.</FadeUp>
     </div>
     <div className="bento">
       <FadeUp className="bento-terminal"><Terminal /></FadeUp>

@@ -1,7 +1,7 @@
 export const email = 'omzala635@gmail.com';
-export const resume = '/Om_Zala_Resume_2026.pdf';
+export const resume = '/OM_ZALA_.pdf';
 export const github = 'https://github.com/Omzala';
-export const linkedin = 'https://www.linkedin.com/in/om-zala-16aa93308';
+export const linkedin = 'https://www.linkedin.com/in/om-zala/';
 
 export const filters = ['All', 'Full stack', 'AI & automation', 'Web experiences'];
 
@@ -35,4 +35,5 @@ export const banditLines = [
   '10+ projects shipped and counting.',
   'Okay okay, I’m dizzy now.',
   'I only steal bugs. Never cookies.',
+  'My mothership, the Trash Panda, is parked just past the arcade.',
 ];

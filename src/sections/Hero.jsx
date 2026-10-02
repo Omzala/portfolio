@@ -25,9 +25,12 @@ export function CountUp({ to, suffix = '', className = '' }) {
 // Letters rise into place on load, then drift apart as the hero scrolls away.
 function Letter({ letter, offset, spread }) {
   const x = useTransform(spread, value => `${offset * value * 22}%`);
-  return <span className="letter-mask" aria-hidden="true">
-    <motion.span className="letter" variants={{ hidden: { y: '105%' }, shown: { y: '0%', transition: { duration: 1.1, ease } } }} style={{ x }}>{letter === ' ' ? ' ' : letter}</motion.span>
-  </span>;
+  // Move the reveal mask with its letter so horizontal drift never clips the glyph.
+  return <motion.span className="hero-letter" style={{ x }} aria-hidden="true">
+    <span className="letter-mask">
+      <motion.span className="letter" variants={{ hidden: { y: '125%' }, shown: { y: '0%', transition: { duration: 1.1, ease } } }}>{letter === ' ' ? ' ' : letter}</motion.span>
+    </span>
+  </motion.span>;
 }
 
 function Chip({ children, tone, className, depth, mouse }) {

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createStage, glowTexture, prefersReducedMotion, runWhileVisible } from './stage.js';
+import { compileScene, createStage, glowTexture, runWhileVisible } from './stage.js';
 
 const X_RANGE = 4.6;
 const Y_MIN = -1.5;
@@ -337,10 +337,29 @@ export function createScavenger(host, { onHud, onOver }) {
     renderer.render(scene, camera);
   };
 
-  const stop = runWhileVisible(host, frame);
-  if (prefersReducedMotion()) frame(0, 0);
+  // Compile every material up front, including the ones that only appear mid-flight, so neither the
+  // first frame nor the first rock, core or spark stalls the game. The loop starts once they are linked.
+  const preview = new THREE.Group();
+  preview.visible = false;
+  preview.add(
+    new THREE.Mesh(rockGeometries[0], rockMaterial), new THREE.Mesh(nutGeometry, nutMaterial),
+    new THREE.Mesh(coreGeometry, coreMaterial), new THREE.Mesh(shieldGeometry, shieldMaterial),
+    new THREE.Sprite(cyanGlow), new THREE.Sprite(orangeGlow),
+    ...Object.values(sparkMaterials).map(material => new THREE.Mesh(sparkGeometry, material)),
+  );
+  scene.add(preview);
+  let stop = () => {};
+  let disposed = false;
+  const ready = compileScene(renderer, scene, camera).then(() => {
+    scene.remove(preview);
+    if (disposed) return;
+    [cyanGlow, orangeGlow].forEach(material => renderer.initTexture(material.map));
+    frame(0, 0);
+    stop = runWhileVisible(host, frame);
+  });
 
   return {
+    ready,
     start() {
       clearField();
       game = reset();
@@ -360,6 +379,7 @@ export function createScavenger(host, { onHud, onOver }) {
     setKey(direction, down) { if (down) keys.add(direction); else keys.delete(direction); },
     get state() { return state; },
     dispose() {
+      disposed = true;
       stop();
       resizeObserver.disconnect();
       clearField();

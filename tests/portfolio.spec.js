@@ -25,25 +25,6 @@ test('the intro counts down, then the 3D hero and every section render without e
   expect(errors).toEqual([]);
 });
 
-test('the terminal answers commands', async ({ page }) => {
-  await page.goto(HOME);
-  await toSection(page, 'about');
-  const input = page.getByRole('textbox', { name: 'Terminal command' });
-  const log = page.getByRole('log', { name: 'Terminal output' });
-  await input.fill('help');
-  await input.press('Enter');
-  await expect(log).toContainText('open <n>');
-  await input.fill('projects');
-  await input.press('Enter');
-  await expect(log).toContainText('09  ai skill events');
-  await input.fill('open 3');
-  await input.press('Enter');
-  await expect(log).toContainText('private business app');
-  await input.fill('clear');
-  await input.press('Enter');
-  await expect(log.locator('p')).toHaveCount(1);
-});
-
 test('the toolbelt switches to zero gravity', async ({ page }) => {
   await page.goto(HOME);
   await toSection(page, 'about');
@@ -67,7 +48,7 @@ test('mission files filter, open in a detail view and step through projects', as
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
 
-  await page.getByRole('button', { name: /^All/ }).click();
+  await page.locator('#work').getByRole('button', { name: /^All/ }).click();
   await expect(page.locator('.pcard')).toHaveCount(9);
   // An off-screen card scrolls into view when it takes keyboard focus.
   await page.getByRole('button', { name: 'Open Travel CRM' }).focus();
@@ -85,7 +66,7 @@ test('mission files filter, open in a detail view and step through projects', as
   expect(await page.evaluate(() => document.querySelector('.work-sticky').scrollLeft)).toBe(0);
 });
 
-test('the arcade needs a pilot name, plays to game over and logs the score', async ({ page }) => {
+test('the arcade flies without a name, then lets the pilot claim a spot on the board', async ({ page }) => {
   test.setTimeout(180000);
   await page.goto(HOME);
   await toSection(page, 'arcade');
@@ -94,9 +75,6 @@ test('the arcade needs a pilot name, plays to game over and logs the score', asy
   await expect(stage).toHaveAttribute('data-status', 'idle');
   const launch = page.getByRole('button', { name: /Launch/ });
   await expect(launch).toBeEnabled();
-  await launch.click();
-  await expect(page.locator('#pilot-error')).toHaveText('Your pilot needs a name for the board.');
-  await page.getByRole('textbox', { name: /Pilot name/ }).fill('  Test <Pilot>  ');
   await launch.click();
   await expect(stage).toHaveAttribute('data-status', 'playing', { timeout: 10000 });
   await expect(stage).toBeFocused();
@@ -107,17 +85,33 @@ test('the arcade needs a pilot name, plays to game over and logs the score', asy
   // Bandit coasts until the asteroid belt wins.
   await expect(stage).toHaveAttribute('data-status', 'over', { timeout: 150000 });
   await expect(page.getByText('Mission over')).toBeVisible();
-  const board = page.locator('.board-list');
-  await expect(board.locator('li.me')).toContainText('Test Pilot');
   const score = await stage.getAttribute('data-score');
-  await expect(board.locator('li.me .pts')).toHaveText(score.padStart(6, '0'));
+  const callsign = page.getByRole('textbox', { name: /Callsign/ });
+  const claim = page.getByRole('button', { name: /Claim #|Save flight/ });
+  await expect(claim).toBeEnabled();
+  await callsign.fill('x');
+  await claim.click();
+  await expect(page.locator('#pilot-error')).toHaveText('Callsigns need at least 2 letters or numbers.');
+  // Callsigns are unique on a shared board, so each run picks its own. Markup is stripped from names.
+  const tag = String(Date.now()).slice(-5);
+  const pilot = `Test ${tag}`;
+  await callsign.fill(`  Test <${tag}>  `);
   await page.screenshot({ path: 'test-results/arcade-over.png' });
+  await claim.click();
+  await expect(stage).toHaveAttribute('data-status', 'claimed');
+  await expect(page.getByText('On the board')).toBeVisible();
+  const board = page.locator('.board-list');
+  await expect(board.locator('li.me')).toContainText(pilot);
+  await expect(board.locator('li.me .pts')).toHaveText(score.padStart(6, '0'));
+  await page.screenshot({ path: 'test-results/arcade-claimed.png' });
 
-  // The board survives a reload on this device.
+  // Other boards and a reload still know this pilot.
+  await page.getByRole('button', { name: 'Today' }).click();
+  await expect(board.locator('li.me')).toContainText(pilot);
   await page.reload();
   await toSection(page, 'arcade');
-  await expect(page.locator('.board-list')).toContainText('Test Pilot');
-  await expect(page.getByRole('textbox', { name: /Pilot name/ })).toHaveValue('Test Pilot');
+  await expect(page.locator('.board-list')).toContainText(pilot);
+  await expect(page.getByText(`Welcome back, ${pilot}.`)).toBeVisible();
 });
 
 test('contact and socials have real destinations', async ({ page, context, request }) => {
@@ -130,11 +124,11 @@ test('contact and socials have real destinations', async ({ page, context, reque
   const contact = page.locator('#contact');
   await expect(contact.locator('.email-pill a')).toHaveAttribute('href', 'mailto:omzala635@gmail.com');
   await expect(contact.getByRole('link', { name: /GitHub/ })).toHaveAttribute('href', 'https://github.com/Omzala');
-  await expect(contact.getByRole('link', { name: /LinkedIn/ })).toHaveAttribute('href', 'https://www.linkedin.com/in/om-zala-16aa93308');
+  await expect(contact.getByRole('link', { name: /LinkedIn/ })).toHaveAttribute('href', 'https://www.linkedin.com/in/om-zala/');
   const downloadPromise = page.waitForEvent('download');
   await contact.getByRole('link', { name: /Résumé/ }).click();
-  expect((await downloadPromise).suggestedFilename()).toBe('Om_Zala_Resume_2026.pdf');
-  const pdf = await request.get('/Om_Zala_Resume_2026.pdf');
+  expect((await downloadPromise).suggestedFilename()).toBe('OM_ZALA_.pdf');
+  const pdf = await request.get('/OM_ZALA_.pdf');
   expect((await pdf.body()).subarray(0, 5).toString()).toBe('%PDF-');
 
   const form = page.locator('.contact-form');

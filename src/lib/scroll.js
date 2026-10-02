@@ -6,7 +6,8 @@ const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matc
 // Inertia scrolling for the whole page. Returns a cleanup function.
 export function startSmoothScroll() {
   if (reduced()) return () => {};
-  lenis = new Lenis({ duration: 1.1, smoothWheel: true, wheelMultiplier: 0.95 });
+  // Let the chat scroll internally, then pass scrolling back to the page at either edge.
+  lenis = new Lenis({ duration: 1.1, smoothWheel: true, wheelMultiplier: 0.95, allowNestedScroll: true });
   let raf = requestAnimationFrame(function loop(time) { lenis?.raf(time); raf = requestAnimationFrame(loop); });
   return () => { cancelAnimationFrame(raf); lenis?.destroy(); lenis = null; };
 }

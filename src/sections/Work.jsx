@@ -26,7 +26,7 @@ function useMedia(query) {
 function BrowserMock({ project }) {
   const Icon = icons[project.icon];
   return <div className="mock" aria-hidden="true">
-    <div className="mock-bar"><i /><i /><i /><span>{project.url ? host(project.url) : 'private deployment'}</span></div>
+    <div className="mock-bar"><i /><i /><i /><span>{project.url ? host(project.url) : 'private deployment'}</span>{project.url && !project.url.includes('github.com') && <em className="mock-live">Live</em>}</div>
     <div className="mock-body">
       <div className="mock-side"><b /><i /><i /><i /><i /></div>
       <div className="mock-main">
