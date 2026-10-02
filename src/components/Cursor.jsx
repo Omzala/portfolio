@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { finePointer } from './ui.jsx';
 
 // A dot that tracks exactly and a ring that trails it; [data-cursor] elements put a label in the ring.
 // Cards under the pointer catch its light: --mx/--my place their glow and rim (see "Ambient details" in the CSS).
+// It runs on any device with a mouse or trackpad, touchscreen laptops included; with reduced motion the
+// ring sits on the dot instead of trailing it.
 export default function Cursor() {
   const dot = useRef(null);
   const ring = useRef(null);
   const [label, setLabel] = useState('');
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !finePointer()) return;
+    if (!window.matchMedia('(any-pointer: fine)').matches) return;
+    const follow = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 0.16;
     document.documentElement.classList.add('has-cursor');
     let x = -100, y = -100, rx = x, ry = y, raf = 0;
     const move = event => {
+      // Fingers on a touchscreen laptop don't need a cursor.
+      if (event.pointerType === 'touch') { leave(); return; }
       x = event.clientX; y = event.clientY;
       dot.current.classList.add('on');
       ring.current.classList.add('on');
@@ -29,7 +33,7 @@ export default function Cursor() {
     const down = () => ring.current.classList.add('down');
     const up = () => ring.current.classList.remove('down');
     const tick = () => {
-      rx += (x - rx) * 0.16; ry += (y - ry) * 0.16;
+      rx += (x - rx) * follow; ry += (y - ry) * follow;
       dot.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
       ring.current.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
       raf = requestAnimationFrame(tick);
