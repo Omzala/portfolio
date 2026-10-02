@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { createStage, glowTexture, prefersReducedMotion, runWhileVisible } from './stage.js';
+import { compileScene, createStage, glowTexture, prefersReducedMotion, runWhileVisible } from './stage.js';
+import { introDone } from '../lib/intro.js';
 
 const DEPTH = 420;
 
@@ -22,7 +23,7 @@ export default function Starfield() {
   useEffect(() => {
     const element = host.current;
     const stage = createStage(element, { maxPixelRatio: 1, antialias: false });
-    if (!stage) return;
+    if (!stage) { introDone('starfield'); return; }
     const { renderer, scene, dispose } = stage;
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 600);
     camera.position.set(0, 0, 12);
@@ -103,22 +104,29 @@ export default function Starfield() {
 
     resize();
     window.addEventListener('resize', resize);
+    // Shaders compile in parallel first, so the first frame (and the intro over it) never stalls.
     let stop = () => {};
-    if (prefersReducedMotion()) {
+    let disposed = false;
+    compileScene(renderer, scene, camera).then(() => {
+      if (disposed) return;
       renderStatic();
-      window.addEventListener('resize', renderStatic);
-      window.addEventListener('scroll', renderStatic, { passive: true });
-    } else {
-      window.addEventListener('pointermove', onPointer, { passive: true });
-      stop = runWhileVisible(element, (dt, elapsed) => {
-        camera.position.x += (pointer.x * 3 - camera.position.x) * 0.03;
-        camera.position.y += (-pointer.y * 2 - camera.position.y) * 0.03;
-        camera.lookAt(0, 0, -40);
-        place(elapsed, true);
-        renderer.render(scene, camera);
-      }, { alwaysOn: true });
-    }
+      introDone('starfield');
+      if (prefersReducedMotion()) {
+        window.addEventListener('resize', renderStatic);
+        window.addEventListener('scroll', renderStatic, { passive: true });
+      } else {
+        window.addEventListener('pointermove', onPointer, { passive: true });
+        stop = runWhileVisible(element, (dt, elapsed) => {
+          camera.position.x += (pointer.x * 3 - camera.position.x) * 0.03;
+          camera.position.y += (-pointer.y * 2 - camera.position.y) * 0.03;
+          camera.lookAt(0, 0, -40);
+          place(elapsed, true);
+          renderer.render(scene, camera);
+        }, { alwaysOn: true });
+      }
+    });
     return () => {
+      disposed = true;
       stop();
       window.removeEventListener('resize', resize);
       window.removeEventListener('resize', renderStatic);

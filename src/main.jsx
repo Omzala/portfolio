@@ -5,20 +5,21 @@ import Cursor from './components/Cursor.jsx';
 import Header from './components/Header.jsx';
 import Marquee from './components/Marquee.jsx';
 import Preloader from './components/Preloader.jsx';
+import ScrollTop from './components/ScrollTop.jsx';
 import { Safe3D } from './components/ui.jsx';
 import Hero from './sections/Hero.jsx';
 import About from './sections/About.jsx';
 import Work from './sections/Work.jsx';
 import Arcade from './sections/Arcade.jsx';
 import { Contact, Footer } from './sections/Contact.jsx';
+import { introSkipped } from './lib/intro.js';
 import { scrollToId, startSmoothScroll } from './lib/scroll.js';
 import './styles.css';
 
 const Starfield = lazy(() => import('./three/Starfield.jsx'));
-const skipIntro = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches || /[?&]nointro\b/.test(location.search);
 
 function App() {
-  const [loading, setLoading] = useState(() => !skipIntro());
+  const [loading, setLoading] = useState(() => !introSkipped());
   const done = useCallback(() => setLoading(false), []);
 
   useEffect(() => startSmoothScroll(), []);
@@ -53,6 +54,7 @@ function App() {
       <Contact />
     </main>
     <Footer />
+    <ScrollTop />
   </MotionConfig>;
 }
 

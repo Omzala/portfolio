@@ -81,7 +81,8 @@ em { font-style: normal; }
 }
 
 /* ───────────────────────── Cursor ───────────────────────── */
-.cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 150; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+/* Above the preloader, since the native cursor is hidden whenever this one is running. */
+.cursor-dot, .cursor-ring { position: fixed; left: 0; top: 0; z-index: 190; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
 .cursor-dot.on, .cursor-ring.on { opacity: 1; }
 .cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--orange); }
 .cursor-ring { width: 40px; height: 40px; margin: -20px 0 0 -20px; display: grid; place-items: center; }
@@ -91,14 +92,14 @@ em { font-style: normal; }
 .cursor-ring span { position: relative; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-ink); opacity: 0; transform: scale(0.5); transition: opacity 0.3s, transform 0.35s var(--ease); }
 .cursor-ring.labelled::before { transform: scale(2.1); background: var(--orange); border-color: var(--orange); }
 .cursor-ring.labelled span { opacity: 1; transform: scale(1); }
-html.has-cursor .game-stage.phase-playing { cursor: none; }
+html.has-cursor, html.has-cursor * { cursor: none !important; }
 
 /* ───────────────────────── Preloader ───────────────────────── */
 .preloader { position: fixed; inset: 0; z-index: 180; background: #050508; display: flex; align-items: flex-end; padding: var(--gutter); }
 .preloader-inner { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
 .preloader-line { font-family: var(--mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding-bottom: 1.4em; }
 .preloader-count { font-family: var(--display); font-weight: 800; font-size: clamp(80px, 18vw, 260px); line-height: 0.8; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
-.preloader-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--orange); transform-origin: left; }
+.preloader-bar { position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--orange); transform: scaleX(0); transform-origin: left; }
 
 /* ───────────────────────── Buttons ───────────────────────── */
 .magnetic { display: inline-block; }
@@ -185,13 +186,17 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .field-error { min-height: 1.2em; font-size: 13px; color: #ff9b73; }
 
 /* ───────────────────────── Hero ───────────────────────── */
-.hero { position: relative; height: 100svh; min-height: 720px; overflow: hidden; }
+/* Clipped sideways only, and stacked over the marquee, so the planet is never cut off or covered as it sinks on scroll. */
+.hero { position: relative; z-index: 1; height: 100svh; min-height: 720px; overflow-x: clip; }
 .hero-meta { position: absolute; left: 0; right: 0; top: 108px; display: flex; justify-content: space-between; gap: 16px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); z-index: 3; }
 .hero-meta .status { display: inline-flex; align-items: center; gap: 10px; color: var(--soft); }
-.hero-name { position: absolute; left: 0; right: 0; top: calc(108px + 3vh); z-index: 1; display: flex; justify-content: center; font-family: var(--display); font-weight: 800; font-size: clamp(64px, 15vw, 236px); line-height: 0.92; letter-spacing: -0.055em; white-space: nowrap; pointer-events: none; }
-.letter-mask { display: inline-block; overflow: hidden; padding: 0.04em 0.01em 0.06em; }
+.hero-name { position: absolute; left: 0; right: 0; top: calc(108px + 3vh); z-index: 1; display: flex; justify-content: center; font-family: var(--display); font-weight: 800; font-size: clamp(64px, 15vw, 236px); line-height: 1; letter-spacing: 0; white-space: nowrap; pointer-events: none; }
+/* Tighten spacing between boxes, not inside glyphs; leave ink room within each reveal mask. */
+.hero-letter { display: inline-flex; flex: 0 0 auto; margin-inline: -0.025em; }
+.letter-mask { display: inline-block; overflow: hidden; padding: 0.08em 0.06em; margin: -0.08em -0.06em; }
 .letter { display: inline-block; will-change: transform; }
-.planet-wrap { position: absolute; left: 0; right: 0; top: 34vh; margin-inline: auto; width: min(40vw, 560px); aspect-ratio: 1; z-index: 0; pointer-events: none; }
+/* The vh cap keeps the whole planet above the fold on short laptop screens. */
+.planet-wrap { position: absolute; left: 0; right: 0; top: 34vh; margin-inline: auto; width: min(40vw, 560px, calc(66vh - 30px)); aspect-ratio: 1; z-index: 0; pointer-events: none; }
 .planet { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 34% 28%, #ff9a5c 0%, #ff6a2b 26%, #b8390a 60%, #3a1204 100%); box-shadow: 0 0 140px rgba(255, 106, 43, 0.35), inset -30px -40px 80px rgba(0, 0, 0, 0.45); }
 .planet::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: repeating-linear-gradient(-18deg, transparent 0 22px, rgba(0, 0, 0, 0.08) 22px 30px); mix-blend-mode: multiply; }
 .planet-ring { position: absolute; left: -32%; right: -32%; top: 43%; height: 26%; border-radius: 50%; border: 2px solid rgba(243, 240, 232, 0.28); transform: rotate(-10deg); }
@@ -228,7 +233,8 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 @keyframes drip { to { top: 100%; } }
 
 /* ───────────────────────── Marquee ───────────────────────── */
-.marquee { position: relative; padding: 70px 0 90px; overflow: hidden; }
+/* Isolated so the strips' own z-index stays inside and the hero planet can pass over them. */
+.marquee { position: relative; isolation: isolate; padding: 70px 0 90px; overflow: hidden; }
 .marquee-row { overflow: hidden; white-space: nowrap; }
 .marquee-track { display: flex; width: max-content; will-change: transform; }
 .marquee-group { display: flex; flex-shrink: 0; }
@@ -245,12 +251,11 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .bento-clock { grid-column: span 4; }
 .bento-status { grid-column: span 3; }
 .bento-tools { grid-column: span 7; }
-.terminal { display: flex; flex-direction: column; cursor: text; }
+.terminal { display: flex; flex-direction: column; min-height: 0; }
 .terminal-bar { height: 48px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 20px; border-bottom: 1px solid var(--line); }
-.terminal-bar i { width: 12px; height: 12px; border-radius: 50%; background: #3a3948; }
-.terminal-bar i:first-child { background: var(--orange); }
-.terminal-bar span { margin-left: 10px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
-.terminal-screen { flex: 1; min-height: 0; overflow-y: auto; padding: 22px 24px 8px; font-family: var(--mono); font-size: 14.5px; line-height: 1.65; scrollbar-width: thin; scrollbar-color: #3a3948 transparent; }
+.terminal-bar span { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--text); }
+.terminal-bar b { padding: 3px 7px; border: 1px solid var(--line-2); border-radius: 6px; font-size: 9px; font-weight: 400; text-transform: uppercase; color: var(--cyan); }
+.terminal-screen { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: auto; padding: 22px 24px 8px; font-size: 14px; line-height: 1.65; scrollbar-width: thin; scrollbar-color: #3a3948 transparent; }
 .terminal-screen p { margin: 0 0 6px; overflow-wrap: anywhere; animation: line-in 0.35s var(--ease) both; }
 @keyframes line-in { from { opacity: 0; transform: translateY(6px); } }
 .t-in { color: var(--muted); }
@@ -260,12 +265,29 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .t-prompt { color: var(--cyan); }
 .caret { display: inline-block; width: 9px; height: 17px; vertical-align: -3px; background: var(--cyan); animation: blink 1s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
-.terminal-input { display: flex; align-items: center; gap: 12px; margin: 0 14px 14px; padding: 0 8px 0 16px; min-height: 54px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); font-family: var(--mono); font-size: 14px; }
+.terminal-input { display: flex; flex-shrink: 0; align-items: center; gap: 12px; margin: 0 14px 10px; padding: 0 8px 0 16px; min-height: 54px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); font-size: 14px; }
 .terminal-input:focus-within { border-color: var(--cyan); }
-.terminal-input input { flex: 1; min-width: 0; min-height: 50px; background: transparent; border: 0; outline: none; color: var(--text); font-family: var(--mono); }
+.terminal-input input { flex: 1; min-width: 0; min-height: 50px; background: transparent; border: 0; outline: none; color: var(--text); }
 .terminal-input input::placeholder { color: var(--faint); }
 .kbd { min-height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line-2); background: transparent; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .kbd:hover { color: var(--text); border-color: var(--line-3); }
+.chat-reset { display: grid; place-items: center; margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); }
+.chat-reset:hover { background: var(--surface-2); color: var(--text); }
+.chat-message { margin-bottom: 18px; }
+.chat-author { display: block; margin-bottom: 5px; color: var(--cyan); font: 10px var(--mono); letter-spacing: 0.12em; }
+.chat-message p { white-space: pre-wrap; }
+.chat-user { margin-left: 24px; padding: 12px 14px; border-radius: 12px 12px 3px 12px; background: var(--surface-2); }
+.chat-user .chat-author { color: var(--muted); }
+.chat-thinking { display: flex; align-items: center; gap: 9px; margin: 12px 0; color: var(--muted); font: 12px var(--mono); }
+.chat-suggestions { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 7px; padding: 0 18px 16px; }
+.chat-suggestions button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 8px; background: transparent; color: var(--muted); font-size: 11px; text-align: left; }
+.chat-suggestions button:hover { color: var(--cyan); border-color: var(--cyan); }
+.chat-send { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; border: 0; border-radius: 10px; color: var(--bg); background: var(--cyan); }
+.chat-send:disabled { opacity: 0.35; cursor: default; }
+.chat-error { display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin: 0 18px 12px; color: #ff9b73; font-size: 12px; }
+.chat-error p { flex: 1; margin: 0; }
+.chat-foot { display: flex; flex-shrink: 0; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; padding: 0 20px 15px; color: var(--muted); font-size: 10px; }
+.chat-foot a { display: inline-flex; align-items: center; gap: 3px; color: var(--cyan); }
 .clock { display: flex; flex-direction: column; justify-content: space-between; padding: 28px; }
 .clock-time { display: block; font-family: var(--display); font-weight: 600; font-size: clamp(56px, 5.4vw, 80px); letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums; }
 .clock-time small { font-size: 0.36em; color: var(--muted); letter-spacing: -0.02em; }
@@ -416,7 +438,30 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .board-mode { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--surface-2); font-size: 12px; color: var(--soft); }
 .board-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .board-list li { display: flex; align-items: center; gap: 14px; min-height: 48px; padding: 0 14px; border-radius: 14px; background: var(--surface-2); border: 1px solid transparent; }
-.board-list .rank { width: 22px; font-family: var(--display); font-weight: 700; color: var(--muted); }
+.board-list .rank { width: 40px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px; font-family: var(--display); font-weight: 700; color: var(--muted); }
+.board-list .medal.m1 { color: #ffc94d; }
+.board-list .medal.m2 { color: #cfd6e4; }
+.board-list .medal.m3 { color: #e0915a; }
+.board-list .you-tag { margin-left: 8px; padding: 2px 7px; border-radius: 999px; background: var(--orange); color: var(--orange-ink); font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: 2px; }
+.board-list li.gap { min-height: 20px; justify-content: center; background: none; color: var(--faint); letter-spacing: 0.3em; }
+.board-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 14px; border-radius: 999px; background: var(--surface-2); }
+.board-tabs button { flex: 1; min-height: 36px; padding: 0 10px; border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); transition: background 0.3s, color 0.3s; }
+.board-tabs button:hover { color: var(--text); }
+.board-tabs button.on { background: var(--text); color: var(--bg); }
+.board-tabs button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.board-me { margin-top: 14px; padding: 12px 14px; border-radius: 14px; border: 1px dashed rgba(255, 106, 43, 0.45); font-size: 14px; color: var(--soft); }
+.board-me b { color: var(--orange); }
+.tier { flex-shrink: 0; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line-2); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.tier.t1 { color: var(--soft); }
+.tier.t2 { color: var(--cyan); border-color: rgba(91, 231, 218, 0.4); }
+.tier.t3 { color: var(--orange); border-color: rgba(255, 106, 43, 0.5); }
+.tier.t4 { color: #ffc94d; border-color: rgba(255, 201, 77, 0.55); background: rgba(255, 201, 77, 0.08); }
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line-2); font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--soft); }
+.chip.hot { border-color: var(--cyan); color: var(--cyan); background: rgba(91, 231, 218, 0.1); }
+.chip.gold { border-color: rgba(255, 201, 77, 0.6); color: #ffc94d; background: rgba(255, 201, 77, 0.1); }
+.rank-score { color: var(--orange); }
+.claim-field { width: 100%; text-align: left; }
 .board-list .who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .board-list .pts { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .board-list li.first .rank { color: var(--orange); }
@@ -426,6 +471,7 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .board-list li.empty.first .rank { color: var(--orange); }
 .board-list li.me { background: rgba(255, 106, 43, 0.14); border-color: rgba(255, 106, 43, 0.55); }
 .board-note { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.board-note.small { margin-top: 4px; font-size: 12px; color: var(--faint); }
 .legend-card { height: auto; padding: 22px; }
 .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 14px; }
 .legend div { display: grid; grid-template-columns: 34px 1fr; column-gap: 12px; align-items: center; }
@@ -470,9 +516,58 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 .footer { position: relative; padding-top: 32px; border-top: 1px solid var(--line); overflow: hidden; }
 .footer-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .footer-time { display: inline-flex; align-items: center; gap: 10px; font-family: var(--mono); }
-.footer-name { position: relative; margin-top: 40px; text-align: center; font-family: var(--display); font-weight: 800; font-size: clamp(64px, 18.5vw, 290px); line-height: 0.82; letter-spacing: -0.065em; white-space: nowrap; user-select: none; }
-.footer-name > span { display: block; padding-bottom: 0.06em; }
-.footer-fill { position: absolute; inset: 0; color: var(--orange); }
+/* The name rises onto a warm horizon: a hairline outline that fills with the planet's gradient as you arrive.
+   Sized from the viewport so "OM ZALA" (5.72em wide) always fits between the gutters. */
+.footer-name { position: relative; isolation: isolate; margin-block: clamp(36px, 5vw, 72px) clamp(10px, 1.6vw, 24px); text-align: center; font-family: var(--display); font-weight: 800; font-size: clamp(48px, calc((100vw - 2 * var(--gutter)) / 5.8), 360px); line-height: 0.8; letter-spacing: -0.04em; white-space: nowrap; user-select: none; }
+.footer-name::before { content: ''; position: absolute; left: 50%; bottom: -0.55em; z-index: -1; width: min(1400px, 120%); height: 1.6em; translate: -50% 0; background: radial-gradient(50% 50% at 50% 50%, rgba(255, 106, 43, 0.3), rgba(255, 106, 43, 0.08) 55%, transparent); pointer-events: none; }
+.footer-name > span { display: block; padding-block: 0.05em 0.09em; }
+/* Unbounded's glyphs overlap internally, so a hollow stroke draws stray lines inside the letters. Painting the
+   stroke under a dark fill hides them and leaves a 1px rim: dark silhouettes against the horizon glow. */
+.footer-name .outline-text { color: var(--bg); -webkit-text-stroke: 2px rgba(243, 240, 232, 0.3); paint-order: stroke fill; }
+.footer-fill { position: absolute; inset: 0; color: transparent; background: linear-gradient(180deg, #ffd3b4 0%, #ff9a5c 26%, var(--orange) 52%, #b8390a 100%); -webkit-background-clip: text; background-clip: text; }
+
+/* ───────────────────────── Ambient details ───────────────────────── */
+html { scrollbar-width: thin; scrollbar-color: rgba(255, 106, 43, 0.55) var(--bg); }
+
+/* Two shooting stars cross the sky now and then, each on its own long cycle so they rarely line up. */
+.space { overflow: hidden; }
+.space::before, .space::after { content: ''; position: absolute; left: var(--sx); top: var(--sy); width: 170px; height: 1.5px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(243, 240, 232, 0.9) 85%, #fff); box-shadow: 0 0 8px rgba(255, 255, 255, 0.45); opacity: 0; transform-origin: right center; animation: shooting-star var(--cycle) linear var(--delay) infinite; }
+.space::before { --sx: 70%; --sy: 9%; --angle: 156deg; --cycle: 13s; --delay: 5s; }
+.space::after { --sx: 36%; --sy: 24%; --angle: 147deg; --cycle: 19s; --delay: 11s; }
+@keyframes shooting-star {
+  0% { opacity: 0; transform: rotate(var(--angle)) translateX(0) scaleX(0.3); }
+  1.5% { opacity: 1; }
+  6%, 100% { opacity: 0; transform: rotate(var(--angle)) translateX(560px) scaleX(1); }
+}
+
+/* Cards catch the cursor's light: a soft glow inside and a lit rim near the pointer (Cursor.jsx sets --mx/--my). */
+@media (hover: hover) and (pointer: fine) {
+  .card::before, .card::after, .pcard::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity 0.45s var(--ease); }
+  .card::before { background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.06), transparent 45%); }
+  .card::after, .pcard::after { z-index: 4; padding: 1px; background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 150, 90, 0.85), transparent 65%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+  .pcard::after { background: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--tone) 90%, white), transparent 65%); }
+  .card:hover::before, .card:hover::after, .pcard:hover::after { opacity: 1; }
+}
+
+/* Back-to-top orb: its ring fills as you travel down the page. */
+.scroll-top { position: fixed; right: var(--gutter); bottom: var(--gutter); z-index: 95; width: 52px; height: 52px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(14, 14, 22, 0.82); color: var(--text); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45); transition: background 0.3s, color 0.3s; }
+.scroll-top:hover { background: var(--orange); color: var(--orange-ink); }
+.scroll-top-ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); fill: none; stroke-width: 2; }
+.scroll-top-ring circle:first-child { stroke: var(--line-2); }
+.scroll-top-ring circle:last-child { stroke: var(--orange); stroke-linecap: round; transition: stroke 0.3s; }
+.scroll-top:hover .scroll-top-ring circle:last-child { stroke: var(--orange-ink); }
+.scroll-top > svg:last-child { position: relative; }
+
+/* A "live" light in the browser mock of every project with a public site. */
+.mock-live { display: inline-flex; flex-shrink: 0; align-items: center; gap: 5px; margin-left: 8px; font-family: var(--mono); font-size: 9.5px; font-weight: 500; font-style: normal; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); }
+.mock-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+
+@media (max-width: 760px) {
+  .scroll-top { right: 14px; bottom: 14px; width: 46px; height: 46px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .space::before, .space::after { display: none; }
+}
 
 /* ───────────────────────── Responsive ───────────────────────── */
 @media (max-width: 1180px) {
@@ -568,6 +663,8 @@ html.has-cursor .game-stage.phase-playing { cursor: none; }
 @media (max-width: 380px) {
   .hero-actions { grid-template-columns: minmax(0, 1fr); }
   .hero-stats span { font-size: 12px; }
+  .board-list .tier { display: none; }
+  .board-list li { gap: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

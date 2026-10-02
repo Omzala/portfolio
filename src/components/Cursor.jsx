@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { finePointer } from './ui.jsx';
 
 // A dot that tracks exactly and a ring that trails it; [data-cursor] elements put a label in the ring.
+// Cards under the pointer catch its light: --mx/--my place their glow and rim (see "Ambient details" in the CSS).
 export default function Cursor() {
   const dot = useRef(null);
   const ring = useRef(null);
@@ -17,6 +18,12 @@ export default function Cursor() {
       const labelled = event.target.closest?.('[data-cursor]');
       setLabel(labelled ? labelled.getAttribute('data-cursor') : '');
       ring.current.classList.toggle('hover', Boolean(event.target.closest?.('a, button, input, textarea, label, [role="application"]')));
+      const card = event.target.closest?.('.card, .pcard');
+      if (card) {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mx', `${x - rect.left}px`);
+        card.style.setProperty('--my', `${y - rect.top}px`);
+      }
     };
     const leave = () => { dot.current.classList.remove('on'); ring.current.classList.remove('on'); };
     const down = () => ring.current.classList.add('down');

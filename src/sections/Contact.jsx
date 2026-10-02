@@ -8,7 +8,7 @@ import { email, github, linkedin, resume } from '../data.js';
 function Social({ href, icon, name, handle, accent, download, external, delay }) {
   const tilt = useTilt(14);
   return <FadeUp delay={delay} className="social-cell">
-    <a ref={tilt} href={href} className={accent ? 'social tilt accent' : 'social tilt'} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} {...(download ? { download: 'Om_Zala_Resume_2026.pdf' } : {})}>
+    <a ref={tilt} href={href} className={accent ? 'social tilt accent' : 'social tilt'} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} {...(download ? { download: true } : {})}>
       <span className="social-icon">{icon}</span>
       <span className="social-text"><strong>{name}</strong><small>{handle}</small></span>
       <span className="social-arrow">{download ? <Download size={17} /> : <ArrowUpRight size={17} />}</span>

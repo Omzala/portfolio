@@ -55,6 +55,27 @@ export function createStage(host, { maxPixelRatio = 1.75, antialias = true, refl
   return { renderer, scene, dispose };
 }
 
+// Starts every shader in `scene` compiling and resolves once they are all linked. With
+// KHR_parallel_shader_compile the driver does this off the main thread, so the first frame no longer
+// freezes the page. Hidden objects count too, so warm up things that only appear later by adding them
+// invisibly. Safe to abandon: a disposed renderer or material simply drops out of the wait.
+export function compileScene(renderer, scene, camera) {
+  let pending;
+  try { pending = renderer.compile(scene, camera); } catch { return Promise.resolve(); }
+  const started = performance.now();
+  return new Promise(resolve => {
+    const check = () => {
+      pending.forEach(material => {
+        const program = renderer.properties.get(material).currentProgram;
+        if (!program || program.isReady()) pending.delete(material);
+      });
+      if (!pending.size || performance.now() - started > 5000) resolve();
+      else setTimeout(check, 16);
+    };
+    check();
+  });
+}
+
 // Runs `frame(dt, elapsed)` only while `target` is on screen and the tab is visible.
 export function runWhileVisible(target, frame, { alwaysOn = false } = {}) {
   let raf = 0;
