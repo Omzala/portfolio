@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useScroll, useSpring, useTransform } from 'framer-motion';
 import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, CalendarDays, Check, GraduationCap, ListChecks, Lock, MapPin, Plane, Rocket, TrendingUp, Wallet, X } from 'lucide-react';
 import { FadeUp, Github, Kicker, Magnetic, RevealText, ease, useTilt } from '../components/ui.jsx';
@@ -56,6 +56,78 @@ function ProjectCard({ project, onOpen, onFocus }) {
       </div>
     </div>
   </motion.article>;
+}
+
+// Phones: files pile up as you scroll (a scroll stack). CSS `position: sticky` pins every file, so the
+// pinning itself runs on the compositor and never lags a finger. On top of that, each file that slides
+// over another pushes the ones beneath one level deeper: they shrink, peek out above it and darken.
+const PEEK = 12;      // px of each buried file left showing above the one in front of it
+const DEPTH = 3;      // buried files that stay visible; deeper ones fade out behind them
+const SHRINK = 0.05;  // scale lost per level of depth
+const SHADE = 0.12;   // darkness added per level of depth
+const clamp01 = value => Math.min(1, Math.max(0, value));
+
+function ProjectStack({ list, onOpen }) {
+  const stack = useRef(null);
+  const nodes = useRef(new Map());
+  const layout = useRef({ items: [], gap: 0, top: 0 });
+
+  useLayoutEffect(() => {
+    const element = stack.current;
+    // Where each file sits in the normal flow, measured once instead of on every scroll.
+    const measure = () => {
+      const gap = parseFloat(getComputedStyle(element).rowGap) || 0;
+      let offset = 0;
+      const items = list.map(project => nodes.current.get(project.id)).filter(Boolean).map(node => {
+        const item = { node, shade: node.querySelector('.stack-shade'), offset, height: node.offsetHeight };
+        offset += item.height + gap;
+        return item;
+      });
+      layout.current = { items, gap, top: items.length ? parseFloat(getComputedStyle(items[0].node).top) || 0 : 0 };
+    };
+    const update = () => {
+      const { items, gap, top } = layout.current;
+      const origin = element.getBoundingClientRect().top;
+      let depth = 0;
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        const level = Math.min(depth, DEPTH);
+        const transform = level ? `translate3d(0, ${(-level * PEEK).toFixed(2)}px, 0) scale(${(1 - level * SHRINK).toFixed(4)})` : '';
+        const opacity = depth > DEPTH ? clamp01(DEPTH + 1 - depth).toFixed(3) : '';
+        const shade = (level * SHADE).toFixed(3);
+        // Only touch the DOM when a value actually changes.
+        if (item.transform !== transform) item.node.style.transform = item.transform = transform;
+        if (item.opacity !== opacity) item.node.style.opacity = item.opacity = opacity;
+        if (item.shadeOpacity !== shade && item.shade) item.shade.style.opacity = item.shadeOpacity = shade;
+        // How far this file has slid over the one before it: 0 as that one lands, 1 once this one lands too.
+        if (i > 0) depth += clamp01(1 - (origin + item.offset - top) / (items[i - 1].height + gap));
+      }
+    };
+    measure();
+    update();
+    const observer = new ResizeObserver(() => { measure(); update(); });
+    observer.observe(element);
+    window.addEventListener('scroll', update, { passive: true });
+    return () => { observer.disconnect(); window.removeEventListener('scroll', update); };
+  }, [list]);
+
+  // Keyboard focus on a buried file scrolls back until that file is the one on top.
+  const focusCard = event => {
+    if (pointerFocus.current) return;
+    const { items, top } = layout.current;
+    const item = items.find(entry => entry.node.contains(event.currentTarget));
+    if (item) scrollToY(window.scrollY + stack.current.getBoundingClientRect().top + item.offset - top);
+  };
+
+  return <div className="stack" ref={stack} style={{ '--peek': `${PEEK}px`, '--depth': DEPTH }}>
+    <AnimatePresence mode="popLayout">
+      {list.map(project => <div key={project.id} className="stack-item" ref={node => { if (node) nodes.current.set(project.id, node); else nodes.current.delete(project.id); }}>
+        <ProjectCard project={project} onOpen={onOpen} onFocus={focusCard} />
+        <i className="stack-shade" aria-hidden="true" />
+      </div>)}
+    </AnimatePresence>
+    <span className="stack-end" aria-hidden="true" />
+  </div>;
 }
 
 function ProjectModal({ project, list, onClose, onStep }) {
@@ -121,10 +193,13 @@ export default function Work() {
   const [filter, setFilter] = useState('All');
   const [open, setOpen] = useState(null);
   const wide = useMedia('(min-width: 900px)');
+  // Landscape phones are too short to pin a file and still show all of it, so they keep a plain list.
+  const portrait = useMedia('(orientation: portrait)');
+  const stacked = !wide && portrait;
   const wrap = useRef(null);
   const track = useRef(null);
   const [distance, setDistance] = useState(0);
-  const list = projects.filter(project => filter === 'All' || project.filter === filter);
+  const list = useMemo(() => projects.filter(project => filter === 'All' || project.filter === filter), [filter]);
 
   useLayoutEffect(() => {
     if (!wide) { setDistance(0); return; }
@@ -181,12 +256,14 @@ export default function Work() {
           <motion.div className="work-track" ref={track} style={wide ? { x } : undefined}>
             <div className="work-intro" aria-hidden={!wide}>
               <strong>{list.length}</strong>
-              <p>{list.length === 1 ? 'mission' : 'missions'} on file.<br />{wide ? 'Keep scrolling to fly through them.' : 'Tap any file to open it.'}</p>
+              <p>{list.length === 1 ? 'mission' : 'missions'} on file.<br />{wide ? 'Keep scrolling to fly through them.' : stacked && list.length > 1 ? 'Scroll to stack them, tap one to open it.' : 'Tap any file to open it.'}</p>
               {wide && <span className="work-arrow"><ArrowRight size={22} /></span>}
             </div>
-            <AnimatePresence mode="popLayout">
-              {list.map(project => <ProjectCard key={project.id} project={project} onOpen={setOpen} onFocus={focusCard} />)}
-            </AnimatePresence>
+            {stacked
+              ? <ProjectStack list={list} onOpen={setOpen} />
+              : <AnimatePresence mode="popLayout">
+                {list.map(project => <ProjectCard key={project.id} project={project} onOpen={setOpen} onFocus={focusCard} />)}
+              </AnimatePresence>}
             <a className="work-outro" href={github} target="_blank" rel="noreferrer" data-cursor="GitHub">
               <Github size={34} />
               <strong>Want the full logbook?</strong>

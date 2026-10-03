@@ -1,4 +1,6 @@
 export const email = 'omzala635@gmail.com';
+export const phone = '+91 63513 94635';
+export const whatsapp = 'https://wa.me/916351394635';
 export const resume = '/OM_ZALA_.pdf';
 export const github = 'https://github.com/Omzala';
 export const linkedin = 'https://www.linkedin.com/in/om-zala/';

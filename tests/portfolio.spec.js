@@ -114,7 +114,31 @@ test('the arcade flies without a name, then lets the pilot claim a spot on the b
   await expect(page.getByText(`Welcome back, ${pilot}.`)).toBeVisible();
 });
 
+// Sectors and power-ups change the rules mid-flight. The dev server exposes the engine so the test
+// can jump ahead instead of flying for a minute.
+test('a flight warps through the sectors and power-ups change the rules mid-flight', async ({ page }) => {
+  await page.goto(HOME);
+  await toSection(page, 'arcade');
+  const stage = page.locator('.game-stage');
+  await page.getByRole('button', { name: /Launch/ }).click();
+  await expect(stage).toHaveAttribute('data-status', 'playing', { timeout: 10000 });
+  const hud = page.locator('.hud');
+  await expect(hud.locator('.hud-sector-name')).toContainText('Asteroid Belt');
+  await page.evaluate(() => window.__arcade.debug.shields(3));
+  await page.evaluate(() => window.__arcade.debug.warp());
+  await expect(hud.locator('.hud-sector-name')).toContainText('Warp jump', { timeout: 10000 });
+  // The new sector is announced halfway through the warp; the HUD switches once the warp ends.
+  await expect(page.locator('.stage-banner')).toContainText('Ion Nebula', { timeout: 20000 });
+  await expect(hud.locator('.hud-sector-name')).toContainText('Ion Nebula', { timeout: 20000 });
+  await expect(hud.locator('.hud-combo')).toContainText('scrap ×2');
+  await page.evaluate(() => window.__arcade.debug.power('chrono'));
+  await expect(page.locator('.stage-banner')).toContainText('Chrono online');
+  await expect(hud.locator('.hud-power')).toContainText('Chrono');
+  await page.screenshot({ path: 'test-results/arcade-nebula.png' });
+});
+
 test('contact and socials have real destinations', async ({ page, context, request }) => {
+  await page.route('**/api/contact', route => route.fulfill({ json: { ok: true } }));
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto(HOME);
   await toSection(page, 'contact');
@@ -125,6 +149,7 @@ test('contact and socials have real destinations', async ({ page, context, reque
   await expect(contact.locator('.email-pill a')).toHaveAttribute('href', 'mailto:omzala635@gmail.com');
   await expect(contact.getByRole('link', { name: /GitHub/ })).toHaveAttribute('href', 'https://github.com/Omzala');
   await expect(contact.getByRole('link', { name: /LinkedIn/ })).toHaveAttribute('href', 'https://www.linkedin.com/in/om-zala/');
+  await expect(contact.getByRole('link', { name: /Chat on WhatsApp/ })).toHaveAttribute('href', 'https://wa.me/916351394635');
   const downloadPromise = page.waitForEvent('download');
   await contact.getByRole('link', { name: /Résumé/ }).click();
   expect((await downloadPromise).suggestedFilename()).toBe('OM_ZALA_.pdf');
@@ -133,9 +158,10 @@ test('contact and socials have real destinations', async ({ page, context, reque
 
   const form = page.locator('.contact-form');
   await form.getByLabel('Your name').fill('Ada');
+  await form.getByLabel('Your email').fill('ada@example.com');
   await form.getByLabel('Message').fill('Hello there');
   await form.getByRole('button', { name: 'Send transmission' }).click();
-  await expect(form.locator('.form-note')).toContainText('Your email app should open');
+  await expect(form.locator('.form-note')).toContainText('Message sent!');
 });
 
 test('mobile navigation works and nothing overflows sideways', async ({ page }) => {
@@ -159,6 +185,36 @@ test('mobile navigation works and nothing overflows sideways', async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({ path: 'test-results/mobile-hero.png' });
+});
+
+test('on phones the mission files pile up into a scroll stack', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(HOME);
+  const items = page.locator('.stack-item');
+  await expect(items).toHaveCount(9);
+  const { top, step, stick } = await page.evaluate(() => {
+    const stack = document.querySelector('.stack');
+    const first = stack.querySelector('.stack-item');
+    return { top: stack.getBoundingClientRect().top + scrollY, step: first.offsetHeight + parseFloat(getComputedStyle(stack).rowGap), stick: parseFloat(getComputedStyle(first).top) };
+  });
+  // Once the third file lands, the first two have sunk back into the pile behind it.
+  await page.evaluate(y => window.scrollTo({ top: y, behavior: 'instant' }), top - stick + step * 2);
+  await expect.poll(() => items.nth(2).evaluate(node => Math.round(node.getBoundingClientRect().top))).toBe(stick);
+  const widths = await items.evaluateAll(nodes => nodes.slice(0, 3).map(node => node.getBoundingClientRect().width));
+  expect(widths[0]).toBeLessThan(widths[1]);
+  expect(widths[1]).toBeLessThan(widths[2]);
+  await page.getByRole('button', { name: 'Open Travel CRM' }).click();
+  await expect(page.getByRole('dialog').getByRole('heading', { level: 3 })).toHaveText('Travel CRM');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  // A buried file comes back to the top of the pile when it takes keyboard focus.
+  await page.getByRole('button', { name: 'Open AgentVisit' }).focus();
+  await expect.poll(() => items.first().evaluate(node => Math.round(node.getBoundingClientRect().top))).toBe(stick);
+  await expect(items.first()).toHaveCSS('transform', 'none');
+  // Landscape phones are too short for the stack and get the plain list.
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(page.locator('.stack')).toHaveCount(0);
+  await expect(page.locator('.pcard')).toHaveCount(9);
 });
 
 test('reduced motion skips the intro and smooth scrolling and keeps content visible', async ({ page }) => {

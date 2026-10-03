@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-On Vercel, pick Vite, use `npm run build`, and set the output directory to `dist`. Vercel also deploys the Node functions in `api/`. A plain static host serves the portfolio, but needs a separately hosted backend for the Gemini chat and global leaderboard.
+On Vercel, pick Vite, use `npm run build`, and set the output directory to `dist`. Vercel also deploys the Node functions in `api/`. A plain static host serves the portfolio, but needs a separately hosted backend for the contact form, Gemini chat and global leaderboard.
 
 ## What's on the page
 
@@ -28,11 +28,31 @@ On Vercel, pick Vite, use `npm run build`, and set the output directory to `dist
 - **Marquee**: two tool bands that speed up and reverse with your scroll velocity.
 - **Mission control** (about): an AI avatar powered by Gemini that answers in Om's voice using his resume and portfolio, a live Vadodara clock, a status card and a toolbelt of tech pills with real physics (matter-js). The chat includes follow-up context, suggested questions, retry, reset and a resume download. Its transcript scrolls internally and passes scrolling back to the page at either edge.
 - **Mission files** (projects): a pinned horizontal-scroll gallery with tilt-on-hover browser mockups tinted per project, animated filters, and a detail view that morphs out of the card. The detail view supports arrow-key and next/previous navigation. On phones it becomes a vertical stack with a bottom sheet.
-- **Space Scavenger** (arcade): a 3D Three.js game. Anyone can launch straight away, no name needed. Steer Bandit's rocket with the mouse, touch or arrow keys, and chain cyan scrap into combos. Orange cores are rare bonuses, shield pickups repair one hit, and rocks cost a shield. After a flight, pilots see where it would place and can claim it under a callsign to join the **Top pilots** leaderboard.
-- **Contact**: copy-to-clipboard email, social tiles, and a form that opens the visitor's email app with the message prefilled (no server needed).
+- **Space Scavenger** (arcade): a 3D Three.js game with bloom, a procedural nebula sky and particle effects. Anyone can launch straight away, no name needed. Steer Bandit's fighter with the mouse, touch or arrow keys and chain scrap into combos. Every 25 seconds the flight warps into the next sector, and each one changes the rules: the Asteroid Belt, the Ion Nebula (double scrap, homing ion mines), the Wreckage Field (rings to thread, spinning girders) and the Meteor Storm, then round again, faster. Power-ups switch things up mid-flight (Magnet, Overdrive and Chrono), and near misses, cores and cleared sectors all score. Red warning rings show where each hazard will cross your path, and the frame rate is paced to the screen so the flight stays smooth on integrated graphics and high-refresh displays. After a flight, pilots see where it would place and can claim it under a callsign to join the **Top pilots** leaderboard.
+- **Contact**: copy-to-clipboard email, social tiles, a WhatsApp CTA for +91 63513 94635, and a form that sends messages to omzala635@gmail.com through server-side SMTP.
 - **Footer**: the outlined name fills in as you reach the bottom.
 
 Across the page: Lenis smooth scrolling, a custom cursor with contextual labels, magnetic buttons, word-by-word heading reveals and a scroll progress bar.
+
+## Contact email and WhatsApp
+
+The contact form posts to `POST /api/contact`. Nodemailer sends the visitor's name, email and message to **omzala635@gmail.com**. The authenticated SMTP account is the sender; the visitor's address is `Reply-To`, so replying to a notification reaches the visitor. The recipient cannot be changed by a submitted request. The WhatsApp button opens `https://wa.me/916351394635`.
+
+1. Enable 2-Step Verification for `omzala635@gmail.com` and create a [Google App Password](https://support.google.com/accounts/answer/185833). Use the App Password, not the normal Google account password.
+2. Add these server-only values to `.env.local` (see `.env.example`):
+
+   ```dotenv
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_SECURE=true
+   SMTP_USER=omzala635@gmail.com
+   SMTP_PASS=your-google-app-password
+   ```
+
+3. Restart `npm run dev`. For production, add the same values to the Vercel project's environment variables and redeploy. Never prefix SMTP credentials with `VITE_` or commit them. `SMTP_FROM` is optional and defaults to `SMTP_USER`; other providers may require a verified sender address and port 587 with `SMTP_SECURE=false` (STARTTLS is required).
+4. Submit a message and check the receiving inbox (including spam). Automated tests mock SMTP and do not send real email. SMTP acceptance confirms the provider accepted the message; final inbox delivery still depends on the provider.
+
+The form requires a name, reply email and message. It disables repeat submissions while sending, clears fields only after SMTP acceptance, and preserves the message on errors. Missing credentials or SMTP failures show an error with email/WhatsApp alternatives. Validation, a hidden bot-trap field, encrypted SMTP connections and a best-effort limit of three attempts per 10 minutes per IP per server instance are included. The in-memory limit is not shared across serverless instances; stronger public-site protection can be configured at the hosting layer.
 
 ## Gemini chat
 
@@ -92,10 +112,11 @@ Without a database (a plain static host, or no `MONGODB_URI`), the arcade runs t
 - `src/three/stage.js`: shared renderer setup, lighting and a render loop that pauses offscreen or in hidden tabs.
 - `src/three/Raccoon.jsx`: Bandit.
 - `src/three/Starfield.jsx`: the scroll-driven background.
-- `src/three/scavenger.js`: the arcade engine, with no React inside.
+- `src/three/scavenger.js`: the arcade engine, with no React inside. Its models and sky are in `scavenger-art.js`, its particles and bloom pipeline in `scavenger-fx.js`, and the sector and power-up rules it shares with the UI in `src/lib/arcade.js`.
 - `src/lib/leaderboard.js`: the leaderboard client (API calls, tiers, and the this-device fallback).
 - `src/lib/scroll.js`: the Lenis wrapper.
 - `api/chat.js`, `api/_lib/om-profile.js`: Gemini endpoint and verified resume context.
+- `api/contact.js`: SMTP contact endpoint; credentials are read only on the server.
 - `api/leaderboard.js`, `api/runs.js`, `api/claim.js`: the leaderboard functions. Shared code is in `api/_lib/`: the MongoDB connection, the pilot cookie, board rules and HTTP helpers.
 - `src/styles.css`: theme tokens, layout, animation and responsive rules.
 
@@ -118,7 +139,8 @@ The suite covers:
 - the toolbelt physics;
 - project filters, the detail view and keyboard focus;
 - a full arcade flight, from nameless launch to claiming a spot on the leaderboard;
-- contact and social links;
+- SMTP contact validation, fixed recipients, reply addresses, provider errors and throttling;
+- contact submissions, retries, WhatsApp and social links;
 - mobile navigation;
 - horizontal overflow at six widths;
 - reduced motion and the WebGL fallback.

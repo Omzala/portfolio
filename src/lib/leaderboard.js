@@ -11,12 +11,13 @@ export const TOP = 10;
 export const cleanName = value => String(value ?? '').normalize('NFKC').replace(/[^\p{L}\p{N} _.'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14);
 
 // Ranks earned by score. Each pilot's tier comes from their best flight on the board.
+// Sized for the four-sector flight: a first clean sector makes Cadet, a full loop is Ace territory.
 export const TIERS = [
   { name: 'Rookie', min: 0 },
-  { name: 'Cadet', min: 500 },
-  { name: 'Pilot', min: 1500 },
-  { name: 'Ace', min: 3000 },
-  { name: 'Legend', min: 6000 },
+  { name: 'Cadet', min: 1000 },
+  { name: 'Pilot', min: 3000 },
+  { name: 'Ace', min: 8000 },
+  { name: 'Legend', min: 20000 },
 ];
 export function tierFor(score) {
   const index = TIERS.findLastIndex(tier => score >= tier.min);

@@ -8,8 +8,9 @@ import { HttpError } from './http.js';
 
 export const TOP = 10;
 export const MAX_SCORE = 2_000_000;
-// Generous ceiling on points per second of flight, to reject obviously forged scores.
-export const MAX_RATE = 900;
+// Generous ceiling on points per second of flight, to reject obviously forged scores. A perfect run
+// (×25 combo, double scrap in the nebula, the warp-tunnel spiral, rings and sector bonuses) stays under it.
+export const MAX_RATE = 3000;
 export const MAX_COMBO = 25;
 
 export const cleanName = value => String(value ?? '').normalize('NFKC').replace(/[^\p{L}\p{N} _.'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 14);
